@@ -4,6 +4,7 @@ import Card from 'react-bootstrap/Card'
 import './BestBooks.css';
 import axios from 'axios';
 import Book from './component/Book.js';
+import BookForm from './component/BookForm.js';
 import { withAuth0 } from '@auth0/auth0-react';
 
 class MyFavoriteBooks extends React.Component {
@@ -16,19 +17,56 @@ class MyFavoriteBooks extends React.Component {
     }
   }
 
+  // get book fuction
   componentDidMount = async () => {
 
     let email = this.props.auth0.user.email
 
-    let bookUrl = `http://localhost:3001/getBook?email=${email}`;
+    let bookUrl = `${process.env.REACT_APP_SERVER}/getBook?email=${email}`;
+
     let bData = await axios.get(bookUrl);
-    console.log("hi");
-    console.log(bData);
+
     this.setState({
       booksData: bData.data
     })
   }
-  
+
+  // create book function
+  createBook = async (e) => {
+    e.preventDefault()
+
+    let bookFormInfo = {
+      title1: e.target.title.value,
+      author1: e.target.author.value,
+      description1: e.target.description.value,
+      status1: e.target.status.value,
+      email1: this.props.auth0.user.email
+    }
+
+    let createData = await axios.post(`${process.env.REACT_APP_SERVER}/createBook`,bookFormInfo);
+
+    this.setState({
+      booksData: createData.data
+    })
+
+  }
+
+  // delete book function
+  deleteBook = async (bookID) => {
+
+    let email = this.props.auth0.user.email
+
+    let deleteData = await axios.delete(`${process.env.REACT_APP_SERVER}/deleteBook?bookID=${bookID}&email=${email}`)
+
+    console.log(deleteData);
+    
+    this.setState({
+      booksData: deleteData.data
+    })
+
+  }
+
+  // render
   render() {
     return (
       <div>
@@ -36,11 +74,17 @@ class MyFavoriteBooks extends React.Component {
           <Card.Body>
             <Card.Title>My Fav Books</Card.Title>
             <Card.Text>
-              {this.state.booksData.map((element, index)=> {
+              <br />
+              {/* add book functions */}
+              <BookForm createBookFun={this.createBook} />
+              <br />
+              {/* get and delete functions */}
+              {this.state.booksData.map((element, index) => {
                 return (
-                  <Book booksData={element} index={index}/>
+                  <Book booksData={element} index={index} deleteBookFun={this.deleteBook} />
                 )
               })}
+              <br />
             </Card.Text>
           </Card.Body>
         </Card>
