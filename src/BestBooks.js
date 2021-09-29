@@ -5,6 +5,7 @@ import './BestBooks.css';
 import axios from 'axios';
 import Book from './component/Book.js';
 import BookForm from './component/BookForm.js';
+import UpdateBookForm from './component/UpdateBookForm.js';
 import { withAuth0 } from '@auth0/auth0-react';
 
 class MyFavoriteBooks extends React.Component {
@@ -13,7 +14,9 @@ class MyFavoriteBooks extends React.Component {
     super(props);
     this.state = {
       booksData: [],
-      searchQuery: ''
+      searchQuery: '',
+      showUpdateForm: false,
+      bookInfoUpdate: {}
     }
   }
 
@@ -43,7 +46,7 @@ class MyFavoriteBooks extends React.Component {
       email1: this.props.auth0.user.email
     }
 
-    let createData = await axios.post(`${process.env.REACT_APP_SERVER}/createBook`,bookFormInfo);
+    let createData = await axios.post(`${process.env.REACT_APP_SERVER}/createBook`, bookFormInfo);
 
     this.setState({
       booksData: createData.data
@@ -58,10 +61,37 @@ class MyFavoriteBooks extends React.Component {
 
     let deleteData = await axios.delete(`${process.env.REACT_APP_SERVER}/deleteBook?bookID=${bookID}&email=${email}`)
 
-    console.log(deleteData);
-    
     this.setState({
       booksData: deleteData.data
+    })
+
+  }
+
+  // update book function
+  updateBook = async (e) => {
+    e.preventDefault();
+
+    let bookFormUpdateInfo = {
+      title: e.target.title.value,
+      author: e.target.author.value,
+      description: e.target.description.value,
+      status: e.target.status.value,
+      email: this.props.auth0.user.email,
+      id: this.state.bookInfoUpdate._id
+    }
+  
+    let updateData = await axios.put(`${process.env.REACT_APP_SERVER}/updateBook`, bookFormUpdateInfo);
+    
+    this.setState({
+      booksData: updateData.data
+    })
+  }
+
+  showUpdateBookForm = async (bookInfo) => {
+
+    await this.setState({
+      showUpdateForm: true,
+      bookInfoUpdate: bookInfo
     })
 
   }
@@ -81,9 +111,17 @@ class MyFavoriteBooks extends React.Component {
               {/* get and delete functions */}
               {this.state.booksData.map((element, index) => {
                 return (
-                  <Book booksData={element} index={index} deleteBookFun={this.deleteBook} />
+                  <Book booksData={element}
+                    index={index}
+                    deleteBookFun={this.deleteBook}
+                    showUpdateBookForm={this.showUpdateBookForm} />
                 )
               })}
+              {this.state.showUpdateForm &&
+                <UpdateBookForm
+                  bookInfo={this.state.bookInfoUpdate}
+                  updateBook={this.updateBook}
+                />}
               <br />
             </Card.Text>
           </Card.Body>
